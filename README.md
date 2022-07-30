@@ -1,3 +1,3 @@
 # Pi Dollars of Pi
 
-Calculating pi, using $3.14 dollars per attempt
+Calculating pi, using no more than $3.14 dollars per attempt
