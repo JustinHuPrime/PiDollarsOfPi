@@ -19,9 +19,50 @@
 
 #include <iostream>
 
+#include "state.h"
+
 using namespace std;
+using namespace pidollarsofpi;
+
+void printUsage(char **argv) {
+  cerr << "Usage: " << argv[0] << " <finalize|calculate>" << endl;
+}
 
 int main(int argc, char **argv) {
-  cout << "Hello, World!" << endl;
-  return 0;
+  if (argc != 2) {
+    printUsage(argv);
+    return 1;
+  }
+
+  try {
+    State state = State::read();
+
+    if (strcmp(argv[1], "finalize") == 0) {
+#ifndef NDEBUG
+      cout << "DEBUG(input):  " << state << endl;
+#endif
+
+      cout << state.finalize() << endl;
+      return 0;
+    } else if (strcmp(argv[1], "calculate") == 0) {
+#ifndef NDEBUG
+      cout << "DEBUG(before): " << state << endl;
+#endif
+
+      state.calculate();
+
+#ifndef NDEBUG
+      cout << "DEBUG(after):  " << state << endl;
+#endif
+
+      State::write(state);
+      return 0;
+    } else {
+      printUsage(argv);
+      return 1;
+    }
+  } catch (runtime_error const &e) {
+    cerr << e.what() << endl;
+    return 1;
+  }
 }
