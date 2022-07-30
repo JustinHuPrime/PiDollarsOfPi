@@ -24,6 +24,8 @@
 #include <cmath>
 #include <fstream>
 #include <string>
+#include <thread>
+#include <vector>
 
 using namespace std;
 
@@ -51,14 +53,20 @@ void State::calculate() noexcept {
   static mpz_class const lIncrement = 545140134_mpz;
   static mpz_class const xFactor = -262537412640768000_mpz;
 
-  // calculate this term and add onto sum
-  sum += m * canonicalize(mpq_class(l, x));
+  vector<thread> threads;
 
-  // prepare for next term
-  k += c12;
-  m *= canonicalize(mpq_class(pow(k, 3) - c16 * k, pow(q + c1, 3)));
-  l += lIncrement;
-  x *= xFactor;
+  threads.emplace_back([this]() { sum += m * canonicalize(mpq_class(l, x)); });
+  threads.emplace_back([this]() { k += c12; });
+  for_each(threads.begin(), threads.end(), [](thread &t) { t.join(); });
+  threads.clear();
+
+  threads.emplace_back([this]() {
+    m *= canonicalize(mpq_class(pow(k, 3) - c16 * k, pow(q + c1, 3)));
+  });
+  threads.emplace_back([this]() { l += lIncrement; });
+  threads.emplace_back([this]() { x *= xFactor; });
+  for_each(threads.begin(), threads.end(), [](thread &t) { t.join(); });
+
   q++;
 }
 
