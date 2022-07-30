@@ -28,7 +28,7 @@
 using namespace std;
 
 namespace pidollarsofpi {
-mpz_class pow(mpz_class const &base, unsigned exponent) {
+mpz_class pow(mpz_class const &base, unsigned long exponent) {
   mpz_class result;
   mpz_pow_ui(result.get_mpz_t(), base.get_mpz_t(), exponent);
   return result;
@@ -52,8 +52,11 @@ void State::calculate() noexcept {
   mpz_class l = l1 * q + l2;
   mpz_class x = pow(x1, q.get_ui());
 
-  sum += mpq_class(factorial6q * l, factorial3q * factorialQCubed * x);
+  mpq_class increment =
+      mpq_class(factorial6q * l, factorial3q * factorialQCubed * x);
+  increment.canonicalize();
 
+  sum += increment;
   q++;
 }
 
@@ -61,7 +64,7 @@ constexpr double digits_per_iteration = 14.1816474627254776555;
 string State::finalize() const noexcept {
   mpf_set_default_prec((digits_per_iteration * q.get_ui() * log2(10)) + 1);
 
-  mpf_class result = 462880_mpf * sqrt(10005_mpf) / mpf_class(sum);
+  mpf_class result = 426880_mpf * sqrt(10005_mpf) / mpf_class(sum);
 
   mp_exp_t exponent;
   string raw = result.get_str(exponent);

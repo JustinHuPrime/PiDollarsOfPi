@@ -28,6 +28,12 @@ void printUsage(char **argv) {
   cerr << "Usage: " << argv[0] << " <finalize|calculate>" << endl;
 }
 
+mpz_class pow(mpz_class const &base, unsigned long exponent) {
+  mpz_class result;
+  mpz_pow_ui(result.get_mpz_t(), base.get_mpz_t(), exponent);
+  return result;
+}
+
 int main(int argc, char **argv) {
   if (argc != 2) {
     printUsage(argv);
@@ -49,7 +55,7 @@ int main(int argc, char **argv) {
       cout << "DEBUG(before): " << state << endl;
 #endif
 
-      state.calculate();
+      for (unsigned long i = 0; i < 1000; ++i) state.calculate();
 
 #ifndef NDEBUG
       cout << "DEBUG(after):  " << state << endl;
