@@ -35,6 +35,11 @@ class State {
  public:
   mpq_class sum;
   mpz_class q;
+  mpq_class m;
+  mpz_class k;
+  mpz_class l;
+  mpz_class x;
+
   State(State const &) noexcept = default;
   State(State &&) noexcept = default;
 

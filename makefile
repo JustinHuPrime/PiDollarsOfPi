@@ -22,6 +22,7 @@
 CXX := g++
 RM := rm -rf
 MV := mv
+CP := cp
 MKDIR := mkdir -p
 DOXYGEN := doxygen
 TOUCH := touch
@@ -101,14 +102,18 @@ debug: OPTIONS := $(OPTIONS) $(DEBUGOPTIONS)
 debug: $(EXENAME) $(TEXENAME) docs
 	@$(ECHO) "Linting source"
 	@libs/cpplint/cpplint.py --quiet --recursive src/main
-	@$(ECHO) "Running tests"
-	@./$(TEXENAME)
+	# @$(ECHO) "Running tests"
+	# @./$(TEXENAME)
+	@$(ECHO) "Resetting state"
+	@$(CP) initial-state state
 	@$(ECHO) "Done building debug!"
 
 release: OPTIONS := $(OPTIONS) $(RELEASEOPTIONS)
 release: $(EXENAME) $(TEXENAME)
-	@$(ECHO) "Running tests"
-	@./$(TEXENAME)
+	# @$(ECHO) "Running tests"
+	# @./$(TEXENAME)
+	@$(ECHO) "Resetting state"
+	@$(CP) initial-state state
 	@$(ECHO) "Done building release!"
 
 docs: $(DOCSDIR)/.timestamp

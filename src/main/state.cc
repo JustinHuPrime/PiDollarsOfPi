@@ -33,6 +33,10 @@ mpz_class pow(mpz_class const &base, unsigned long exponent) {
   mpz_pow_ui(result.get_mpz_t(), base.get_mpz_t(), exponent);
   return result;
 }
+mpq_class canonicalize(mpq_class q) {
+  q.canonicalize();
+  return q;
+}
 
 void State::calculate() noexcept {
   // assume this never happens - we must have run for 2^64 iterations if it did!
@@ -40,31 +44,29 @@ void State::calculate() noexcept {
   //   throw runtime_error("q is too large");
   // }
 
-  mpz_class const six = 6_mpz;
-  mpz_class const three = 3_mpz;
-  mpz_class const l1 = 545140134_mpz;
-  mpz_class const l2 = 13591409_mpz;
-  mpz_class const x1 = -262573412640768000_mpz;
+  static mpz_class const c1 = 1_mpz;
+  static mpz_class const c12 = 12_mpz;
+  static mpz_class const c16 = 16_mpz;
 
-  mpz_class factorial6q = factorial(six * q);
-  mpz_class factorial3q = factorial(three * q);
-  mpz_class factorialQCubed = pow(factorial(q), 3);
-  mpz_class l = l1 * q + l2;
-  mpz_class x = pow(x1, q.get_ui());
+  static mpz_class const lIncrement = 545140134_mpz;
+  static mpz_class const xFactor = -262537412640768000_mpz;
 
-  mpq_class increment =
-      mpq_class(factorial6q * l, factorial3q * factorialQCubed * x);
-  increment.canonicalize();
+  // calculate this term and add onto sum
+  sum += m * canonicalize(mpq_class(l, x));
 
-  sum += increment;
+  // prepare for next term
+  k += c12;
+  m *= canonicalize(mpq_class(pow(k, 3) - c16 * k, pow(q + c1, 3)));
+  l += lIncrement;
+  x *= xFactor;
   q++;
 }
 
 constexpr double digits_per_iteration = 14.1816474627254776555;
 string State::finalize() const noexcept {
-  mpf_set_default_prec((digits_per_iteration * q.get_ui() * log2(10)) + 1);
-
-  mpf_class result = 426880_mpf * sqrt(10005_mpf) / mpf_class(sum);
+  mpf_set_default_prec(digits_per_iteration * (q.get_ui() + 1) * log2(10) + 1);
+  mpf_class result = 426880_mpf * sqrt(10005_mpf) /
+                     mpf_class(sum + m * canonicalize(mpq_class(l, x)));
 
   mp_exp_t exponent;
   string raw = result.get_str(exponent);
@@ -91,11 +93,12 @@ void State::write(State const &state) {
 }
 
 istream &operator>>(std::istream &is, State &state) {
-  is >> state.sum >> state.q;
+  is >> state.sum >> state.q >> state.m >> state.k >> state.l >> state.x;
   return is;
 }
 ostream &operator<<(std::ostream &os, State const &state) {
-  os << state.sum << " " << state.q;
+  os << state.sum << " " << state.q << " " << state.m << " " << state.k << " "
+     << state.l << " " << state.x;
   return os;
 }
 }  // namespace pidollarsofpi
