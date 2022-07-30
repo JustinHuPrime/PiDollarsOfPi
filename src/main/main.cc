@@ -17,55 +17,48 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include <chrono>
 #include <iostream>
 
 #include "state.h"
 
 using namespace std;
+using namespace std::chrono;
 using namespace pidollarsofpi;
 
-void printUsage(char **argv) {
-  cerr << "Usage: " << argv[0] << " <finalize|calculate>" << endl;
-}
-
-mpz_class pow(mpz_class const &base, unsigned long exponent) {
-  mpz_class result;
-  mpz_pow_ui(result.get_mpz_t(), base.get_mpz_t(), exponent);
-  return result;
-}
+constexpr duration<int64_t> stateSaveInterval = seconds(60);
+constexpr duration<int64_t> resultSaveInterval = seconds(600);
 
 int main(int argc, char **argv) {
-  if (argc != 2) {
-    printUsage(argv);
-    return 1;
-  }
-
   try {
-    State state = State::read();
+    State state = State::load();
 
-    if (strcmp(argv[1], "finalize") == 0) {
-#ifndef NDEBUG
-      cout << "DEBUG(input):  " << state << endl;
-#endif
+    steady_clock::time_point stateSaveStart = steady_clock::now();
+    unsigned long lastStateQ = 0;
 
-      cout << state.finalize() << endl;
-      return 0;
-    } else if (strcmp(argv[1], "calculate") == 0) {
-#ifndef NDEBUG
-      cout << "DEBUG(before): " << state << endl;
-#endif
+    steady_clock::time_point resultSaveStart = steady_clock::now();
+    unsigned long lastResultQ = 0;
 
-      for (unsigned long i = 0; i < 1000; ++i) state.calculate();
+    while (true) {
+      if (steady_clock::now() - stateSaveStart >= stateSaveInterval &&
+          lastStateQ != state.q) {
+        cout << "Saving state at q = " << state.q.get_ui() << endl;
+        state.saveState();
 
-#ifndef NDEBUG
-      cout << "DEBUG(after):  " << state << endl;
-#endif
+        stateSaveStart = steady_clock::now();
+        lastStateQ = state.q.get_ui();
+      }
 
-      State::write(state);
-      return 0;
-    } else {
-      printUsage(argv);
-      return 1;
+      if (steady_clock::now() - resultSaveStart >= resultSaveInterval &&
+          lastResultQ != state.q) {
+        cout << "Saving result at q = " << state.q.get_ui() << endl;
+        state.saveResult();
+
+        resultSaveStart = steady_clock::now();
+        lastResultQ = state.q.get_ui();
+      }
+
+      state.calculate();
     }
   } catch (runtime_error const &e) {
     cerr << e.what() << endl;

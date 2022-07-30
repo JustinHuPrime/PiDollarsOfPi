@@ -49,10 +49,11 @@ class State {
   State &operator=(State &&) noexcept = default;
 
   void calculate() noexcept;
-  std::string finalize() const noexcept;
 
-  static State read();
-  static void write(State const &);
+  void saveState() const;
+  void saveResult() const;
+
+  static State load();
 
  private:
   State() noexcept = default;

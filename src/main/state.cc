@@ -70,18 +70,28 @@ void State::calculate() noexcept {
   q++;
 }
 
+void State::saveState() const {
+  ofstream fout("state");
+  if (!fout) throw runtime_error("could not open state file");
+
+  fout << *this;
+}
+
 constexpr double digits_per_iteration = 14.1816474627254776555;
-string State::finalize() const noexcept {
-  mpf_set_default_prec(digits_per_iteration * (q.get_ui() + 1) * log2(10) + 1);
-  mpf_class result = 426880_mpf * sqrt(10005_mpf) /
-                     mpf_class(sum + m * canonicalize(mpq_class(l, x)));
+void State::saveResult() const {
+  ofstream fout("result");
+  if (!fout) throw runtime_error("could not open result file");
+
+  mpf_set_default_prec(digits_per_iteration * q.get_ui() * log2(10) + 1);
+  mpf_class result = 426880_mpf * sqrt(10005_mpf) / mpf_class(sum);
 
   mp_exp_t exponent;
   string raw = result.get_str(exponent);
-  return raw.substr(0, exponent) + "." + raw.substr(exponent);
+
+  fout << raw.substr(0, exponent) << "." << raw.substr(exponent);
 }
 
-State State::read() {
+State State::load() {
   ifstream fin("state");
   if (!fin) throw runtime_error("could not open state file");
 
@@ -91,13 +101,6 @@ State State::read() {
   if (!fin.eof()) throw runtime_error("state file has bad format");
 
   return state;
-}
-
-void State::write(State const &state) {
-  ofstream fout("state");
-  if (!fout) throw runtime_error("could not open state file");
-
-  fout << state;
 }
 
 istream &operator>>(std::istream &is, State &state) {
